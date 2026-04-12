@@ -1,10 +1,12 @@
+package hipercubo;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
 /**
- * Cosos para acordarnos jajaja
+ * Cosos para acordarnos 
  * Cada nodo se identifica con 4 bits: b3 b2 b1 b0
  *   b3 = salto de conexión (cross-link entre cubos)
  *   b2 = dimensión vertical
@@ -20,15 +22,15 @@ public class HipercuboRed extends JFrame {
 
     // Colores
     static final Color BG          = new Color(10, 12, 20);
-    static final Color CUBE_BG     = new Color(18, 22, 38);
+    //static final Color CUBE_BG     = new Color(18, 22, 38);
     static final Color NODE_IDLE   = new Color(55, 80, 140);
-    static final Color NODE_ACTIVE = new Color(0, 220, 180);
-    static final Color NODE_SRC    = new Color(255, 200, 0);
-    static final Color NODE_DST    = new Color(255, 80, 80);
-    static final Color NODE_PATH   = new Color(0, 255, 140);
-    static final Color EDGE_IDLE   = new Color(40, 55, 100);
-    static final Color EDGE_PATH   = new Color(0, 230, 160);
-    static final Color EDGE_CROSS  = new Color(180, 80, 255);   // aristas entre cubos
+    //static final Color NODE_ACTIVE = new Color(0, 220, 180);
+    static final Color NODOEMISOR    = new Color(255, 200, 0);
+    static final Color NODODESTINO    = new Color(255, 80, 80);
+    static final Color NODORUTA   = new Color(57, 255, 20);
+    //static final Color EDGE_IDLE   = new Color(57, 55, 100);
+    static final Color ARISTARUTA   = new Color(0, 230, 160);
+    static final Color ARISTASALTO  = new Color(180, 80, 255);   // aristas entre cubos
     static final Color TEXT_MAIN   = new Color(200, 215, 255);
     static final Color TEXT_DIM    = new Color(90, 110, 160);
     static final Color ACCENT      = new Color(0, 200, 160);
@@ -42,10 +44,10 @@ public class HipercuboRed extends JFrame {
 
     CubePanel cubePanel;
     JLabel    statusLabel;
-    JTextArea logArea;
+    //JTextArea logArea;
     JComboBox<String> srcBox, dstBox;
 
-    // ── Coordenadas 2D de los 8 nodos dentro de cada cubo ────────
+    // Coordenadas 2D de los 8 nodos dentro de cada cubo 
     // Disposición isométrica de cubo 3D proyectado en 2D
     // nodo i (0..7): bits b2(vertical) b1(diagonal) b0(horizontal)
     static final int[][] NODE_POS = {
@@ -67,7 +69,7 @@ public class HipercuboRed extends JFrame {
         {0,4},{1,5},{2,6},{3,7},   // verticales   (bit 2)
     };
 
-    // ── Main ─────────────────────────────────────────────────────
+    // Main 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(HipercuboRed::new);
     }
@@ -79,52 +81,45 @@ public class HipercuboRed extends JFrame {
         getContentPane().setBackground(BG);
 
         // Encabezado
-        JPanel header = buildHeader();
-        add(header, BorderLayout.NORTH);
+        JPanel encabezado = crearEncabezado();
+        add(encabezado, BorderLayout.NORTH);
 
-        // ── Centro: cubos ──
+        // Centro: cubos
         cubePanel = new CubePanel();
         add(cubePanel, BorderLayout.CENTER);
 
-        // ── Panel derecho: controles + log ──
-        JPanel side = buildSidePanel();
-        add(side, BorderLayout.EAST);
+        // Panel derecho: controles 
+        JPanel derecho = crearPanelDerecho();
+        add(derecho, BorderLayout.EAST);
 
         setSize(1100, 680);
         setLocationRelativeTo(null);
         setVisible(true);
     }
 
-    // ── Header ───────────────────────────────────────────────────
-    JPanel buildHeader() {
+    // Encabezado 
+    JPanel crearEncabezado() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(new Color(12, 16, 28));
         p.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(30, 50, 90)));
 
-        JLabel title = new JLabel("  ◈  RED DE HIPERCUBOS", SwingConstants.LEFT);
+        JLabel title = new JLabel("RED DE HIPERCUBOS", SwingConstants.LEFT);
         title.setFont(new Font("Monospaced", Font.BOLD, 18));
         title.setForeground(ACCENT);
-        title.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 0));
-
-        JLabel sub = new JLabel("Paradigmas de Programación  ·  Enrutamiento por Tabla de Verdad  ", SwingConstants.RIGHT);
-        sub.setFont(new Font("Monospaced", Font.PLAIN, 11));
-        sub.setForeground(TEXT_DIM);
 
         p.add(title, BorderLayout.WEST);
-        p.add(sub,   BorderLayout.EAST);
         return p;
     }
 
-    // ── Panel lateral ────────────────────────────────────────────
-    JPanel buildSidePanel() {
+    //  Panel derecho 
+    JPanel crearPanelDerecho() {
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         p.setBackground(PANEL_BG);
-        p.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, new Color(25, 40, 75)));
         p.setPreferredSize(new Dimension(300, 0));
 
-        // ── Sección: selección de nodos ──
-        p.add(sectionLabel("CONFIGURACIÓN DE RUTA"));
+        // Selección de nodos
+        p.add(sectionLabel("RUTA"));
         p.add(Box.createVerticalStrut(6));
 
         // Fuente
@@ -138,56 +133,33 @@ public class HipercuboRed extends JFrame {
         p.add(Box.createVerticalStrut(12));
 
         // Botón rutear
-        JButton routeBtn = styledButton("▶  CALCULAR RUTA");
+        JButton routeBtn = styledButton("CALCULAR RUTA");
         routeBtn.addActionListener(e -> doRoute());
         p.add(wrapCenter(routeBtn));
         p.add(Box.createVerticalStrut(4));
 
         // Botón reset
-        JButton resetBtn = styledButtonGhost("↺  LIMPIAR");
+        JButton resetBtn = styledButtonGhost("LIMPIAR");
         resetBtn.addActionListener(e -> doReset());
         p.add(wrapCenter(resetBtn));
         p.add(Box.createVerticalStrut(14));
 
         // ── Leyenda ──
         p.add(sectionLabel("LEYENDA"));
-        p.add(legendRow(NODE_SRC,   "Nodo Emisor"));
-        p.add(legendRow(NODE_DST,   "Nodo Destino"));
-        p.add(legendRow(NODE_PATH,  "Nodo en Ruta"));
-        p.add(legendRow(EDGE_PATH,  "Arista de Ruta"));
-        p.add(legendRow(EDGE_CROSS, "Salto entre Cubos (bit 3)"));
+        p.add(legendRow(NODOEMISOR,   "Nodo Emisor"));
+        p.add(legendRow(NODODESTINO,   "Nodo Destino"));
+        p.add(legendRow(NODORUTA,  "Nodo en Ruta"));
+        p.add(legendRow(ARISTARUTA,  "Arista de Ruta"));
+        p.add(legendRow(ARISTASALTO, "Salto entre Cubos (bit 3)"));
         p.add(Box.createVerticalStrut(8));
 
-        // ── Leyenda dimensiones ──
-        p.add(sectionLabel("DIMENSIONES (BITS)"));
-        p.add(dimRow("bit 0", "Horizontal"));
-        p.add(dimRow("bit 1", "Diagonal"));
-        p.add(dimRow("bit 2", "Vertical"));
-        p.add(dimRow("bit 3", "Salto entre cubos"));
-        p.add(Box.createVerticalStrut(10));
-
-        // ── Status ──
+        //  Status 
         statusLabel = new JLabel(" ");
         statusLabel.setFont(new Font("Monospaced", Font.BOLD, 11));
         statusLabel.setForeground(ACCENT);
         statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 16, 6, 8));
         statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         p.add(statusLabel);
-
-        // ── Log ──
-        p.add(sectionLabel("LOG DE ENRUTAMIENTO"));
-        logArea = new JTextArea(12, 20);
-        logArea.setFont(new Font("Monospaced", Font.PLAIN, 10));
-        logArea.setBackground(new Color(8, 10, 18));
-        logArea.setForeground(new Color(160, 200, 160));
-        logArea.setEditable(false);
-        logArea.setLineWrap(true);
-        logArea.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
-        JScrollPane scroll = new JScrollPane(logArea);
-        scroll.setBorder(BorderFactory.createLineBorder(new Color(25, 40, 75)));
-        scroll.setAlignmentX(Component.LEFT_ALIGNMENT);
-        scroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        p.add(scroll);
 
         return p;
     }
@@ -311,7 +283,7 @@ public class HipercuboRed extends JFrame {
         int si = srcBox.getSelectedIndex();
         int di = dstBox.getSelectedIndex();
         if (si == 0 || di == 0) {
-            statusLabel.setText("⚠ Selecciona emisor y destino.");
+            statusLabel.setText("Selecciona emisor y destino.");
             return;
         }
         // índice global: 0-7 = cubo0, 8-15 = cubo1
@@ -319,65 +291,59 @@ public class HipercuboRed extends JFrame {
         dest   = di - 1;
 
         if (source == dest) {
-            statusLabel.setText("⚠ Emisor = Destino.");
+            statusLabel.setText("Emisor = Destino.");
             return;
         }
 
         path.clear();
         pathEdges.clear();
-        StringBuilder log = new StringBuilder();
         Random rng = new Random();
 
-        log.append("=== TABLA DE VERDAD ===\n");
-        log.append(String.format("Emisor : Nodo %-2d [%s]\n", source, bits4(source)));
-        log.append(String.format("Destino: Nodo %-2d [%s]\n", dest,   bits4(dest)));
-        log.append("\nbit3=salto  bit2=vert  bit1=diag  bit0=horiz\n");
-        log.append("───────────────────────────────────────────\n");
+       System.out.println("=== TABLA DE VERDAD ===");
+       System.out.println(String.format("Emisor : Nodo %-2d [%s]", source, bits4(source)));
+       System.out.println(String.format("Destino: Nodo %-2d [%s]", dest, bits4(dest)));
+  
+
 
         int cur = source;
         path.add(cur);
         int maxSteps = 20; // seguridad
         while (cur != dest && maxSteps-- > 0) {
             int xorVal = cur ^ dest;
-            log.append(String.format("\nNodo actual : [%s]\n", bits4(cur)));
-            log.append(String.format("Destino     : [%s]\n", bits4(dest)));
-            log.append(String.format("XOR         : [%s]\n", bits4(xorVal)));
-            log.append("Bits a corregir: ");
+             System.out.println(String.format("\nNodo actual : [%s]", bits4(cur)));
+             System.out.println(String.format("Destino     : [%s]", bits4(dest)));
+             System.out.println(String.format("XOR         : [%s]", bits4(xorVal)));
+             System.out.print("Bits a corregir: ");
 
             List<Integer> dims = new ArrayList<>();
             for (int bit = 0; bit < 4; bit++) {
                 if (((xorVal >> bit) & 1) == 1) {
                     dims.add(bit);
-                    log.append("bit").append(bit).append(" ");
+                     System.out.print("bit" + bit + " ");
                 }
             }
-            log.append("\n");
-
-            // Elegir dimensión al azar
+            System.out.println("");
+            
             int chosen = dims.get(rng.nextInt(dims.size()));
             int next = cur ^ (1 << chosen);
 
             String dimName = new String[]{"horizontal","diagonal","vertical","salto"}[chosen];
-            log.append(String.format("→ Elegido bit%d (%s): %s→%s\n",
-                chosen, dimName, bits4(cur), bits4(next)));
+           System.out.println(String.format("Elegido bit%d (%s): %s→%s",
+        chosen, dimName, bits4(cur), bits4(next)));
+
 
             pathEdges.add(new int[]{cur, next});
             cur = next;
             path.add(cur);
         }
 
-        log.append("\n=== RUTA FINAL ===\n");
-        log.append("Pasos: ").append(path.size() - 1).append("\n");
+        System.out.println("\n=== RUTA FINAL ===");
+        System.out.println("Pasos: " + (path.size() - 1));
         StringBuilder ruta = new StringBuilder();
         for (int n : path) ruta.append("[").append(bits4(n)).append("] → ");
         String rs = ruta.toString();
-        log.append(rs.endsWith(" → ") ? rs.substring(0, rs.length()-4) : rs);
-        log.append("\n");
-
-        routeLog = log.toString();
-        logArea.setText(routeLog);
-        logArea.setCaretPosition(0);
-        statusLabel.setText("✓ Ruta calculada: " + (path.size()-1) + " salto(s)");
+        System.out.println(rs.endsWith(" → ") ? rs.substring(0, rs.length()-4) : rs);
+        statusLabel.setText("Ruta calculada: " + (path.size()-1) + " salto(s)");
         cubePanel.repaint();
     }
 
@@ -385,7 +351,6 @@ public class HipercuboRed extends JFrame {
         source = -1; dest = -1;
         path.clear(); pathEdges.clear();
         routeLog = "";
-        logArea.setText("");
         statusLabel.setText(" ");
         srcBox.setSelectedIndex(0);
         dstBox.setSelectedIndex(0);
@@ -424,39 +389,14 @@ public class HipercuboRed extends JFrame {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-            drawGrid(g);
-            drawCubeLabel(g, CUBE0_X, CUBE0_Y, 0);
-            drawCubeLabel(g, CUBE1_X, CUBE1_Y, 1);
             drawCube(g, CUBE0_X, CUBE0_Y, 0);
             drawCube(g, CUBE1_X, CUBE1_Y, 1);
             drawCrossLinks(g);
-            drawNodes(g, CUBE0_X, CUBE0_Y, 0);
-            drawNodes(g, CUBE1_X, CUBE1_Y, 1);
+            dibujarNodos(g, CUBE0_X, CUBE0_Y, 0);
+            dibujarNodos(g, CUBE1_X, CUBE1_Y, 1);
             drawRouteInfo(g);
         }
 
-        void drawGrid(Graphics2D g) {
-            g.setColor(new Color(18, 25, 45));
-            int step = 30;
-            for (int x = 0; x < getWidth(); x += step)
-                g.drawLine(x, 0, x, getHeight());
-            for (int y = 0; y < getHeight(); y += step)
-                g.drawLine(0, y, getWidth(), y);
-        }
-
-        void drawCubeLabel(Graphics2D g, int ox, int oy, int cubeIdx) {
-            String label = "HIPERCUBO " + cubeIdx + "  (bit3=" + cubeIdx + ")";
-            g.setFont(new Font("Monospaced", Font.BOLD, 12));
-            g.setColor(cubeIdx == 0 ? new Color(80, 140, 255) : new Color(180, 80, 255));
-            g.drawString(label, ox, oy - 6);
-
-            // Marco del cubo
-            g.setColor(cubeIdx == 0 ? new Color(30, 50, 100) : new Color(60, 25, 100));
-            g.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,
-                1f, new float[]{4,4}, 0));
-            g.drawRoundRect(ox - 10, oy - 4, CUBE_W + 15, CUBE_H + 20, 12, 12);
-            g.setStroke(new BasicStroke(1));
-        }
 
         void drawCube(Graphics2D g, int ox, int oy, int cubeIdx) {
             // Offset global: cubo0 = nodos 0-7, cubo1 = nodos 8-15
@@ -469,7 +409,7 @@ public class HipercuboRed extends JFrame {
 
                 boolean inPath = edgeInPath(u, v);
                 int dimBit = Integer.numberOfTrailingZeros(e[0] ^ e[1]);
-                Color edgeColor = inPath ? EDGE_PATH
+                Color edgeColor = inPath ? ARISTARUTA
                     : dimBit == 0 ? new Color(50,70,120)
                     : dimBit == 1 ? new Color(60,50,120)
                     :               new Color(40,70,100);
@@ -513,7 +453,7 @@ public class HipercuboRed extends JFrame {
                     g.drawString("S", mx + 2, my - 2);
                 }
             }
-            // También dibujar los cross-links que estén en la ruta pero no en visible[]
+            // También dibujar las lineas de cruce que estén en la ruta pero no en visible[]
             for (int[] e : pathEdges) {
                 int bit = Integer.numberOfTrailingZeros(e[0] ^ e[1]);
                 if (bit == 3) {
@@ -533,7 +473,7 @@ public class HipercuboRed extends JFrame {
             g.setStroke(new BasicStroke(1));
         }
 
-        void drawNodes(Graphics2D g, int ox, int oy, int cubeIdx) {
+        void dibujarNodos(Graphics2D g, int ox, int oy, int cubeIdx) {
             int base = cubeIdx * 8;
             for (int i = 0; i < 8; i++) {
                 int global = base + i;
@@ -541,9 +481,9 @@ public class HipercuboRed extends JFrame {
 
                 // Color del nodo
                 Color fill;
-                if (global == source) fill = NODE_SRC;
-                else if (global == dest) fill = NODE_DST;
-                else if (path.contains(global)) fill = NODE_PATH;
+                if (global == source) fill = NODOEMISOR;
+                else if (global == dest) fill = NODODESTINO;
+                else if (path.contains(global)) fill = NODORUTA;
                 else fill = NODE_IDLE;
 
                 // Sombra

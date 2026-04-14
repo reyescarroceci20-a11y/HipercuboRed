@@ -20,15 +20,13 @@ import java.util.List;
  */
 public class HipercuboRed extends JFrame {
 
-    // Colores
+    // Colores para la interfaz
     static final Color BG          = new Color(10, 12, 20);
-    //static final Color CUBE_BG     = new Color(18, 22, 38);
-    static final Color NODE_IDLE   = new Color(55, 80, 140);
-    //static final Color NODE_ACTIVE = new Color(0, 220, 180);
+    static final Color NODOS   = new Color(55, 80, 140);
     static final Color NODOEMISOR    = new Color(255, 200, 0);
     static final Color NODODESTINO    = new Color(255, 80, 80);
     static final Color NODORUTA   = new Color(57, 255, 20);
-    //static final Color EDGE_IDLE   = new Color(57, 55, 100);
+
     static final Color ARISTARUTA   = new Color(0, 230, 160);
     static final Color ARISTASALTO  = new Color(180, 80, 255);   // aristas entre cubos
     static final Color TEXT_MAIN   = new Color(200, 215, 255);
@@ -37,14 +35,13 @@ public class HipercuboRed extends JFrame {
     static final Color PANEL_BG    = new Color(14, 18, 30);
 
     // Estado
-    int source = -1, dest = -1;
-    List<Integer> path = new ArrayList<>();          // nodos globales (0-15)
-    List<int[]>   pathEdges = new ArrayList<>();     // pares [u,v] globales
+    int origen = -1, dest = -1; //guardan el numero del nodo
+    List<Integer> caminonodos = new ArrayList<>();          // guardan la ruta de nodos globales (0-15)
+    List<int[]>   lineasCamino = new ArrayList<>();     // pares [u,v] globales
     String routeLog = "";
 
     CubePanel cubePanel;
     JLabel    statusLabel;
-    //JTextArea logArea;
     JComboBox<String> srcBox, dstBox;
 
     // Coordenadas 2D de los 8 nodos dentro de cada cubo 
@@ -287,26 +284,26 @@ public class HipercuboRed extends JFrame {
             return;
         }
         // índice global: 0-7 = cubo0, 8-15 = cubo1
-        source = si - 1;  // 0..15
+        origen = si - 1;  // 0..15
         dest   = di - 1;
 
-        if (source == dest) {
+        if (origen == dest) {
             statusLabel.setText("Emisor = Destino.");
             return;
         }
 
-        path.clear();
-        pathEdges.clear();
+        caminonodos.clear();
+        lineasCamino.clear();
         Random rng = new Random();
 
        System.out.println("=== TABLA DE VERDAD ===");
-       System.out.println(String.format("Emisor : Nodo %-2d [%s]", source, bits4(source)));
+       System.out.println(String.format("Emisor : Nodo %-2d [%s]", origen, bits4(origen)));
        System.out.println(String.format("Destino: Nodo %-2d [%s]", dest, bits4(dest)));
   
 
 
-        int cur = source;
-        path.add(cur);
+        int cur = origen;
+        caminonodos.add(cur);
         int maxSteps = 20; // seguridad
         while (cur != dest && maxSteps-- > 0) {
             int xorVal = cur ^ dest;
@@ -332,24 +329,24 @@ public class HipercuboRed extends JFrame {
         chosen, dimName, bits4(cur), bits4(next)));
 
 
-            pathEdges.add(new int[]{cur, next});
+            lineasCamino.add(new int[]{cur, next});
             cur = next;
-            path.add(cur);
+            caminonodos.add(cur);
         }
 
         System.out.println("\n=== RUTA FINAL ===");
-        System.out.println("Pasos: " + (path.size() - 1));
+        System.out.println("Pasos: " + (caminonodos.size() - 1));
         StringBuilder ruta = new StringBuilder();
-        for (int n : path) ruta.append("[").append(bits4(n)).append("] → ");
+        for (int n : caminonodos) ruta.append("[").append(bits4(n)).append("] → ");
         String rs = ruta.toString();
         System.out.println(rs.endsWith(" → ") ? rs.substring(0, rs.length()-4) : rs);
-        statusLabel.setText("Ruta calculada: " + (path.size()-1) + " salto(s)");
+        statusLabel.setText("Ruta calculada: " + (caminonodos.size()-1) + " salto(s)");
         cubePanel.repaint();
     }
 
     void doReset() {
-        source = -1; dest = -1;
-        path.clear(); pathEdges.clear();
+        origen = -1; dest = -1;
+        caminonodos.clear(); lineasCamino.clear();
         routeLog = "";
         statusLabel.setText(" ");
         srcBox.setSelectedIndex(0);
@@ -364,7 +361,7 @@ public class HipercuboRed extends JFrame {
     }
 
     boolean edgeInPath(int u, int v) {
-        for (int[] e : pathEdges) {
+        for (int[] e : lineasCamino) {
             if ((e[0]==u && e[1]==v)||(e[0]==v && e[1]==u)) return true;
         }
         return false;
@@ -454,7 +451,7 @@ public class HipercuboRed extends JFrame {
                 }
             }
             // También dibujar las lineas de cruce que estén en la ruta pero no en visible[]
-            for (int[] e : pathEdges) {
+            for (int[] e : lineasCamino) {
                 int bit = Integer.numberOfTrailingZeros(e[0] ^ e[1]);
                 if (bit == 3) {
                     int localU = e[0] & 7, localV = e[1] & 7;
@@ -481,10 +478,10 @@ public class HipercuboRed extends JFrame {
 
                 // Color del nodo
                 Color fill;
-                if (global == source) fill = NODOEMISOR;
+                if (global == origen) fill = NODOEMISOR;
                 else if (global == dest) fill = NODODESTINO;
-                else if (path.contains(global)) fill = NODORUTA;
-                else fill = NODE_IDLE;
+                else if (caminonodos.contains(global)) fill = NODORUTA;
+                else fill = NODOS;
 
                 // Sombra
                 g.setColor(new Color(0,0,0,80));
@@ -495,7 +492,7 @@ public class HipercuboRed extends JFrame {
                 g.fillOval(p.x - NODE_R, p.y - NODE_R, NODE_R*2, NODE_R*2);
 
                 // Borde
-                boolean highlighted = path.contains(global);
+                boolean highlighted = caminonodos.contains(global);
                 g.setColor(highlighted ? fill.brighter() : new Color(80, 110, 180));
                 g.setStroke(new BasicStroke(highlighted ? 2.5f : 1f));
                 g.drawOval(p.x - NODE_R, p.y - NODE_R, NODE_R*2, NODE_R*2);
@@ -503,7 +500,7 @@ public class HipercuboRed extends JFrame {
 
                 // ID en 4 bits
                 g.setFont(new Font("Monospaced", Font.BOLD, 9));
-                g.setColor(global == source || global == dest ? BG : TEXT_MAIN);
+                g.setColor(global == origen || global == dest ? BG : TEXT_MAIN);
                 String label = bits4(global);
                 FontMetrics fm = g.getFontMetrics();
                 g.drawString(label, p.x - fm.stringWidth(label)/2, p.y + 4);
@@ -517,10 +514,10 @@ public class HipercuboRed extends JFrame {
         }
 
         void drawRouteInfo(Graphics2D g) {
-            if (path.size() < 2) return;
+            if (caminonodos.size() < 2) return;
             // Flecha de paso en cada arista de la ruta
             g.setColor(new Color(0, 255, 160, 180));
-            for (int[] e : pathEdges) {
+            for (int[] e : lineasCamino) {
                 Point pu = globalPoint(e[0]);
                 Point pv = globalPoint(e[1]);
                 drawArrow(g, pu, pv);
